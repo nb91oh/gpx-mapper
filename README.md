@@ -15,6 +15,8 @@ next, install the requirements:
 pip install -r requirements.txt
 ```
 
+NOTE: this project uses geopandas as a dependency, whose dependencies cannot be installed directly from pypi on windows (https://geopandas.org/install.html#installing-with-pip). if you are on Windows I recommend you use Ubuntu on WSL instead (https://ubuntu.com/wsl)
+
 ## running the application
 
 with the virtual environment activated and at the root of the directory run the following to start the application:
