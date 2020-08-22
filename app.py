@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, g, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, g, jsonify, get_flashed_messages
 from werkzeug.utils import secure_filename
 import os
 import sqlite3
 import pandas as pd
+import geopandas as gpd
+import folium
+from shapely.geometry import LineString
 
 from mapper.map import get_map
 from mapper.db import create_db
@@ -44,11 +47,11 @@ def close_db(error):
         g.sqlite_db.close()
 
 
-@app.route('/')
-def home():
+@app.route('/select')
+def select():
     conn = get_db()
     cursor = conn.cursor()
-    sql = """SELECT hikes.name AS hike FROM (SELECT DISTINCT filename, name FROM points) hikes;"""
+    sql = """SELECT hikes.filename AS hike FROM (SELECT DISTINCT filename, upload_date FROM points) hikes;"""
     cursor.execute(sql)
     results = cursor.fetchall()
     hikes = []
@@ -61,7 +64,7 @@ def index():
     m = get_map()
     return m
 
-@app.route('/upload')
+@app.route('/')
 def upload():
     return render_template('upload.html')
 
@@ -70,19 +73,30 @@ def upload_file():
     if request.method == 'POST':
         f = request.files['file']
         if not allowed_file(f.filename) == True:
-            return "sorry we only take .gpx round these parts"
-        user_text = request.form.get('name')
+            flash("sorry we only take .gpx round these parts")
+            return redirect(url_for('upload'))
         conn = get_db()
-        insert_gpx(conn, f, user_text)
-        # f.save(os.path.join('uploads', secure_filename(f.filename)))
-        flash('file uploaded successfully')
-        return redirect(url_for('home'))
+        insert_gpx(conn, f)
+        return redirect(url_for('select'))
 
 
 @app.route('/mapper', methods = ['POST'])
 def mapper():
     hikes = request.form['hikes']
     conn = get_db()
-    sql = "SELECT hike_points.x, hike_points.y, hike_points.z FROM (SELECT * FROM points WHERE name = ? ORDER BY created_at ASC) hike_points"
+    sql = "SELECT hike_points.x, hike_points.y, hike_points.z FROM (SELECT * FROM points WHERE filename = ? ORDER BY created_at ASC) hike_points"
     df = pd.read_sql(sql = sql, con = conn, params = (hikes,))
-    return (df.to_html())
+    points_df = gpd.GeoDataFrame(df, geometry = gpd.points_from_xy(df.x, df.y))
+    line = LineString(points_df.geometry)
+    center_x = line.centroid.x
+    center_y = line.centroid.y
+    geojson = gpd.GeoSeries([line]).__geo_interface__
+
+
+    m = folium.Map(location=[center_y, center_x], zoom_start=12)
+    folium.GeoJson(
+        geojson,
+        name = 'geojson',
+    ).add_to(m)
+
+    return m._repr_html_()

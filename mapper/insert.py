@@ -23,15 +23,17 @@ def parse_gpx(gpx_file):
 
     return points
 
-def insert_gpx(conn, gpx_file, user_text):
-    insert_sql = "INSERT INTO points (filename, name, upload_date, track_id, segment_id, point_id, x, y, z, created_at) \
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+
+
+def insert_gpx(conn, gpx_file):
+    insert_sql = "INSERT INTO points (filename, upload_date, track_id, segment_id, point_id, x, y, z, created_at) \
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
     filename = gpx_file.filename
     points = parse_gpx(gpx_file)
     upload_date = datetime.datetime.now()
 
     for i in points:
-        conn.execute(insert_sql, (filename, user_text, str(upload_date), str(i['track_id']), str(i['segment_id']), str(i['point_id']), i['long'], i['lat'], i['elev'], i['time']))
+        conn.execute(insert_sql, (filename, str(upload_date), str(i['track_id']), str(i['segment_id']), str(i['point_id']), i['long'], i['lat'], i['elev'], i['time']))
     conn.commit()
     return 

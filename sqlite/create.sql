@@ -1,6 +1,5 @@
 CREATE TABLE points(
 	filename text NOT NULL,
-	name text NOT NULL,
 	upload_date timestamp NOT NULL, 
 	track_id text NOT NULL,
 	segment_id text NOT NULL,
