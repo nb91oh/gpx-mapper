@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, g, 
 from werkzeug.utils import secure_filename
 import os
 import sqlite3
+import pandas as pd
 
 from mapper.map import get_map
 from mapper.db import create_db
@@ -47,20 +48,13 @@ def close_db(error):
 def home():
     conn = get_db()
     cursor = conn.cursor()
-    sql = """SELECT hikes.name || ' -- ' || hikes.filename AS hike FROM (SELECT DISTINCT filename, name FROM points) hikes;"""
+    sql = """SELECT hikes.name AS hike FROM (SELECT DISTINCT filename, name FROM points) hikes;"""
     cursor.execute(sql)
     results = cursor.fetchall()
-    data = []
+    hikes = []
     for row in results:
-        data.append(list(row))
-    return jsonify(data)
-    # path = './uploads'
-    # files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-
-    # if len(files) == 0:
-    #     return "<h1>this is the home page</h1>"
-    # else:
-    #     return str(files)
+        hikes.append(row['hike'])
+    return render_template("select.html", hikes = hikes)
 
 @app.route('/index')
 def index():
@@ -84,18 +78,11 @@ def upload_file():
         flash('file uploaded successfully')
         return redirect(url_for('home'))
 
-@app.route('/select', methods = ['GET'])
-def select():
-    conn = get_db()
-    cursor = conn.cursor()
-    sql = """SELECT hikes.name || ' -- ' || hikes.filename AS hike, filename, name FROM (SELECT DISTINCT filename, name FROM points) hikes;"""
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    hikes = []
-    for row in results:
-        hikes.append(row['hike'])
-    return render_template("select.html", hikes = hikes)
 
-@app.route('/mapper')
+@app.route('/mapper', methods = ['POST'])
 def mapper():
-    return 
+    hikes = request.form['hikes']
+    conn = get_db()
+    sql = "SELECT hike_points.x, hike_points.y, hike_points.z FROM (SELECT * FROM points WHERE name = ? ORDER BY created_at ASC) hike_points"
+    df = pd.read_sql(sql = sql, con = conn, params = (hikes,))
+    return (df.to_html())

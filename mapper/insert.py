@@ -4,9 +4,6 @@ import uuid
 import datetime
 
 def parse_gpx(gpx_file):
-    # todo : write the logic to parse the gpx file
-    # should return list of list of track/segment/point/x/y/z/time
-    
     gpx =  gpxpy.parse(gpx_file)
 
     points = []
