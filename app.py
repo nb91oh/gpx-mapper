@@ -83,3 +83,19 @@ def upload_file():
         # f.save(os.path.join('uploads', secure_filename(f.filename)))
         flash('file uploaded successfully')
         return redirect(url_for('home'))
+
+@app.route('/select', methods = ['GET'])
+def select():
+    conn = get_db()
+    cursor = conn.cursor()
+    sql = """SELECT hikes.name || ' -- ' || hikes.filename AS hike, filename, name FROM (SELECT DISTINCT filename, name FROM points) hikes;"""
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    hikes = []
+    for row in results:
+        hikes.append(row['hike'])
+    return render_template("select.html", hikes = hikes)
+
+@app.route('/mapper')
+def mapper():
+    return 

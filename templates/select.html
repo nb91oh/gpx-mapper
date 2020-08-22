@@ -1,0 +1,9 @@
+<form action="/mapper" method="POST">
+    <label for="hikes">Choose a hike:</label>
+    <select name="hikes" id="hikes">
+        {% for hike in hikes %}
+        <option value="{{ hike }}"> {{ hike }}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Submit">
+</form>
