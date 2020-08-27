@@ -71,7 +71,7 @@ def index():
     for row in results:
         hikes.append(row['hike'])
     if request.method == 'GET':
-        return render_template('test.html', hikes=hikes)
+        return render_template('home.html', hikes=hikes)
     elif request.method == 'POST':
         selected_hike = request.form['hikes']
         sql = "SELECT hike_points.x, hike_points.y, hike_points.z FROM (SELECT * FROM points WHERE filename = ? ORDER BY created_at ASC) hike_points"
@@ -83,4 +83,4 @@ def index():
         location = json.dumps([center_y, center_x])
         geojson = json.dumps(gpd.GeoSeries([line]).__geo_interface__)
 
-        return render_template('test.html', hikes = hikes, location = location, geojson = geojson)
+        return render_template('home.html', hikes = hikes, location = location, geojson = geojson)
