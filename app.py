@@ -81,6 +81,7 @@ def index():
         center_x = line.centroid.x
         center_y = line.centroid.y
         location = json.dumps([center_y, center_x])
+        bounds = json.dumps([line.bounds[::-1][0:2], line.bounds[::-1][2:4]])
         geojson = json.dumps(gpd.GeoSeries([line]).__geo_interface__)
 
-        return render_template('home.html', hikes = hikes, location = location, geojson = geojson)
+        return render_template('home.html', hikes = hikes, location = location, geojson = geojson, bounds = bounds)
