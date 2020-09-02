@@ -25,7 +25,7 @@ with the virtual environment activated and at the root of the directory run the 
 flask run
 ```
 
-and navigate to http://127.0.0.1:5000/ to view the application
+and navigate to http://127.0.0.1:5000/ to view the application. some sample .gpx files are availble int the gpx_files folder.
 
 
 NOTE: this is in very early stages and very much a WIP :) 
