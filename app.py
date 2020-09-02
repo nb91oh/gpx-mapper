@@ -68,67 +68,41 @@ def upload_file():
             return redirect(url_for('upload'))
         conn = get_db()
         insert_gpx(conn, f)
-        return redirect(url_for('index'))
+        return redirect(url_for('test'))
 
 
-@app.route('/', methods = ['GET', 'POST'])
-def index():
+@app.route('/')
+def test():
     conn = get_db()
     cursor = conn.cursor()
-    sql = """SELECT hikes.filename AS hike FROM (SELECT DISTINCT filename, upload_date FROM points) hikes;"""
+    sql = """SELECT DISTINCT hike_id, hike_date, duration, hike_length, elevation_gain, avg_speed FROM hikes ORDER BY hike_date;"""
     cursor.execute(sql)
     results = cursor.fetchall()
     hikes = []
     for row in results:
-        hikes.append(row['hike'])
-    if request.method == 'GET':
-        return render_template('home.html', hikes=hikes)
-    elif request.method == 'POST':
-        selected_hike = request.form['hikes']
-        sql = "SELECT hike_points.x, hike_points.y, hike_points.z FROM (SELECT * FROM points WHERE filename = ? ORDER BY created_at ASC) hike_points"
-        df = pd.read_sql(sql = sql, con = conn, params = (selected_hike,))
-        points_df = gpd.GeoDataFrame(df, geometry = gpd.points_from_xy(df.x, df.y))
-        line = LineString(points_df.geometry)
-        center_x = line.centroid.x
-        center_y = line.centroid.y
-        location = json.dumps([center_y, center_x])
-        bounds = json.dumps([line.bounds[::-1][0:2], line.bounds[::-1][2:4]])
-        geojson = json.dumps(gpd.GeoSeries([line]).__geo_interface__)
+        hike_id = row['hike_id']
+        hike_date = row['hike_date']
+        duration = row['duration']
+        hike_length = row['hike_length']
+        elevation_gain = row['elevation_gain']
+        avg_speed = row['avg_speed']
+        hike = {"hike_id": hike_id, "hike_date": hike_date, "duration": duration, "hike_length": hike_length, "elevation_gain": elevation_gain, "avg_speed": avg_speed}
+        hikes.append(hike)
 
-        return render_template('home.html', hikes = hikes, location = location, geojson = geojson, bounds = bounds)
+    return render_template('home.html', hikes = hikes)
 
-
-@app.route('/dashboard', methods = ['GET', 'POST'])
-def dashboard():
+@app.route('/map')
+def map():
     conn = get_db()
-    cursor = conn.cursor()
-    sql = """SELECT hikes.filename AS hike FROM (SELECT DISTINCT filename, upload_date FROM points) hikes;"""
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    hikes = []
-    for row in results:
-        hikes.append(row['hike'])
-    if request.method == 'GET':
-        return render_template('dashboard.html', hikes = hikes)
-    if request.method == 'POST':
-        selected_hike = request.form['hikes']
-        sql = "SELECT * FROM points WHERE filename = ?"
-        df = pd.read_sql(sql = sql, con = conn, params = (selected_hike,))
-        avg_x = df.x.mean()
-        avg_y = df.y.mean()
-        epsg = latLong2ESPG(avg_y, avg_x)
-        points_df = gpd.GeoDataFrame(df, geometry = gpd.points_from_xy(df.x, df.y, df.z))
-        points_df = points_df.set_crs(epsg=4326)
-        points_utm_df = points_df.to_crs(epsg=epsg)
-        points = points_utm_df.geometry
-        distances = []
-        for i in list(range(len(points))):
-            if i == 0:
-                distance = 0
-            else:
-                x = (points[i].x - points[i-1].x) ** 2
-                y = (points[i].y - points[i-1].y) ** 2
-                distance = math.sqrt(x+y)
-            distances.append(distance)
-        total_distance = round(sum(distances)/1000, 2)
-        return render_template('dashboard.html', hikes = hikes, distance = total_distance)
+    hike_id = request.args.get('id')
+    sql = "SELECT hike_points.x, hike_points.y FROM (SELECT * FROM points WHERE hike_id = ? ORDER BY created_at ASC) hike_points"
+    df = pd.read_sql(sql = sql, con = conn, params = (hike_id,))
+    points_df = gpd.GeoDataFrame(df, geometry = gpd.points_from_xy(df.x, df.y))
+    line = LineString(points_df.geometry)
+    center_x = line.centroid.x
+    center_y = line.centroid.y
+    location = json.dumps([center_y, center_x])
+    bounds = json.dumps([line.bounds[::-1][0:2], line.bounds[::-1][2:4]])
+    geojson = json.dumps(gpd.GeoSeries([line]).__geo_interface__)
+
+    return render_template('map.html', location = location, geojson = geojson, bounds = bounds)
