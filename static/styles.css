@@ -26,4 +26,7 @@
   color: white;
 }
 
-#mapid { height: 800px; }
+#mapid { 
+  height: 800px;
+  width: 100%
+}

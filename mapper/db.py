@@ -7,5 +7,12 @@ def create_db():
     conn = sqlite3.connect('./sqlite/gpx.db')
     with open('./sqlite/create.sql', 'r') as file:
         sql = file.read()
-        conn.execute(sql)
+        commands = sql.split(';')
+        for command in commands:
+            conn.execute(command)
+        conn.commit()
+        conn.close()
     return 
+
+if __name__ == "__main__":
+    create_db()

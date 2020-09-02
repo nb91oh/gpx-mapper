@@ -6,6 +6,7 @@ import pandas as pd
 import geopandas as gpd
 import folium
 from shapely.geometry import LineString
+import math
 
 from mapper.db import create_db
 from mapper.insert import insert_gpx
@@ -38,6 +39,15 @@ def get_db():
     return g.sqlite_db
 
 
+def latLong2ESPG(lat, long):
+    utm = (math.floor((long + 180)/6) % 60) + 1
+    if lat >= 0:
+        base_code = 32600
+    else:
+        base_code = 32700
+    espg = base_code + utm
+    return espg
+
 @app.teardown_appcontext
 def close_db(error):
     if hasattr(g, 'sqlite_db'):
@@ -53,6 +63,7 @@ def upload_file():
     if request.method == 'POST':
         f = request.files['file']
         if not allowed_file(f.filename) == True:
+            # todo: make this a javascript alert
             flash("sorry we only take .gpx round these parts")
             return redirect(url_for('upload'))
         conn = get_db()
@@ -85,3 +96,39 @@ def index():
         geojson = json.dumps(gpd.GeoSeries([line]).__geo_interface__)
 
         return render_template('home.html', hikes = hikes, location = location, geojson = geojson, bounds = bounds)
+
+
+@app.route('/dashboard', methods = ['GET', 'POST'])
+def dashboard():
+    conn = get_db()
+    cursor = conn.cursor()
+    sql = """SELECT hikes.filename AS hike FROM (SELECT DISTINCT filename, upload_date FROM points) hikes;"""
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    hikes = []
+    for row in results:
+        hikes.append(row['hike'])
+    if request.method == 'GET':
+        return render_template('dashboard.html', hikes = hikes)
+    if request.method == 'POST':
+        selected_hike = request.form['hikes']
+        sql = "SELECT * FROM points WHERE filename = ?"
+        df = pd.read_sql(sql = sql, con = conn, params = (selected_hike,))
+        avg_x = df.x.mean()
+        avg_y = df.y.mean()
+        epsg = latLong2ESPG(avg_y, avg_x)
+        points_df = gpd.GeoDataFrame(df, geometry = gpd.points_from_xy(df.x, df.y, df.z))
+        points_df = points_df.set_crs(epsg=4326)
+        points_utm_df = points_df.to_crs(epsg=epsg)
+        points = points_utm_df.geometry
+        distances = []
+        for i in list(range(len(points))):
+            if i == 0:
+                distance = 0
+            else:
+                x = (points[i].x - points[i-1].x) ** 2
+                y = (points[i].y - points[i-1].y) ** 2
+                distance = math.sqrt(x+y)
+            distances.append(distance)
+        total_distance = round(sum(distances)/1000, 2)
+        return render_template('dashboard.html', hikes = hikes, distance = total_distance)
