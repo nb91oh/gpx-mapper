@@ -7,6 +7,12 @@ import geopandas as gpd
 import folium
 from shapely.geometry import LineString
 import math
+import exifread
+import datetime
+import pytz
+from tzwhere import tzwhere
+from pytz import timezone
+import pytz
 
 from mapper.db import create_db
 from mapper.insert import insert_gpx
@@ -107,3 +113,19 @@ def map():
     geojson = json.dumps(gpd.GeoSeries([line]).__geo_interface__)
 
     return render_template('map.html', location = location, geojson = geojson, bounds = bounds)
+
+
+@app.route('/img_upload', methods = ['POST'])
+def img_upload():
+    for file in request.files:
+        if file.startswith('img_file'):
+            hike_id = file.split('.')[1]
+
+    f = request.files[f'img_file.{hike_id}']
+
+    tags = exifread.process_file(f)
+    datetimestr = tags['Image DateTime'].values
+
+    return jsonify(datetimestr)
+
+

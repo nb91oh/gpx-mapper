@@ -27,7 +27,7 @@
         <li><a href="{{ url_for('map', id = hike.hike_id) }}" type="button" class="btn btn-link">View Map</a></li>
         <li>
           <form action = "/img_upload" method = "POST" enctype = "multipart/form-data">
-            <input type = "file" name = "img_file" multiple/>
+            <input type = "file" name = "img_file.{{ hike.hike_id }}"/>
             <input type = "submit"/>
           </form>
         </li>

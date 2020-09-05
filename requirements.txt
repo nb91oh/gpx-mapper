@@ -6,6 +6,7 @@ chardet==3.0.4
 click==7.1.2
 click-plugins==1.1.1
 cligj==0.5.0
+ExifRead==2.3.1
 Fiona==1.8.13.post1
 Flask==1.1.2
 folium==0.11.0
@@ -33,6 +34,7 @@ Shapely==1.7.0
 six==1.15.0
 toml==0.10.1
 typed-ast==1.4.1
+tzwhere==3.0.3
 urllib3==1.25.10
 Werkzeug==1.0.1
 wrapt==1.12.1
