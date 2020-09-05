@@ -24,7 +24,7 @@
 
         L.control.scale().addTo(map)
 
-        var geojsonFeature = JSON.parse({{ geojson | tojson}})
+        var geojsonFeature = JSON.parse({{ geojson | tojson }})
         L.geoJSON(geojsonFeature).addTo(map)
 
         map.fitBounds({{ bounds }})

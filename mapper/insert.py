@@ -93,7 +93,6 @@ def insert_gpx(conn, gpx_file):
 
     conn.execute(insert_sql, (str(hike_id), hike_date, duration, length_m, total_gain, kmph))
     conn.commit()
-
-    conn.close()    
+   
     return 
 

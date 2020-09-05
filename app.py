@@ -58,16 +58,17 @@ def close_db(error):
 def upload():
     return render_template('upload.html')
 
-@app.route('/uploader', methods = ['GET', 'POST'])
+@app.route('/uploader', methods = ['POST'])
 def upload_file():
     if request.method == 'POST':
-        f = request.files['file']
-        if not allowed_file(f.filename) == True:
-            # todo: make this a javascript alert
-            flash("sorry we only take .gpx round these parts")
-            return redirect(url_for('upload'))
-        conn = get_db()
-        insert_gpx(conn, f)
+        files = request.files.getlist('file')
+        # if not allowed_file(f.filename) == True:
+        #     # todo: make this a javascript alert
+        #     flash("sorry we only take .gpx round these parts")
+        #     return redirect(url_for('upload'))
+        for file in files:
+            conn = get_db()
+            insert_gpx(conn, file)
         return redirect(url_for('test'))
 
 
