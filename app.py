@@ -35,7 +35,7 @@ def allowed_file(filename):
 
 def connect_db():
     sql = sqlite3.connect('./sqlite/gpx.db')
-    sql.row_factory = sqlite3.Row
+    #sql.row_factory = sqlite3.Row
     return sql
 
 
@@ -125,7 +125,35 @@ def img_upload():
 
     tags = exifread.process_file(f)
     datetimestr = tags['Image DateTime'].values
+    datetimeobj = datetime.datetime.strptime(datetimestr, "%Y:%m:%d %H:%M:%S")
 
-    return jsonify(datetimestr)
+    conn = get_db()
+    cursor = conn.cursor()
+    sql = "SELECT AVG(y) , AVG(x) FROM points WHERE hike_id = ?"
+    cursor.execute(sql, (hike_id,))
+    results = cursor.fetchone()
+    avg_y = results[0]
+    avg_x = results[1]
+    tz = tzwhere.tzwhere()
+    timezone_str = tz.tzNameAt(avg_y, avg_x)
+    
+    fmt = '%Y-%m-%d %H:%M:%S%z'
+    eastern = timezone(timezone_str)
+    loc_dt = eastern.localize(datetimeobj)
+    utc = pytz.utc
+    utc_str = loc_dt.astimezone(utc).strftime(fmt)
+    utc_str_format = utc_str[:-2] + ':' '00'
+
+    sql = """SELECT * FROM points \
+        WHERE created_at = ? AND hike_id = ?\
+        LIMIT 1;"""
+    
+    cursor.execute(sql, (utc_str_format, hike_id))
+    results = cursor.fetchall()
+
+    if results:
+        return jsonify("the img was on this hike")
+    else:
+        return jsonify("the img was not on this hike")
 
 
