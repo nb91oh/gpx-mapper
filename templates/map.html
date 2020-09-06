@@ -29,6 +29,13 @@
 
         map.fitBounds({{ bounds }})
 
+        {% if markers %}
+        {% for marker in markers %}
+        var marker = L.marker([{{ marker.y }}, {{ marker.x }}]).addTo(map)
+        marker.bindPopup('<img src="{{ url_for('static', filename='img/' + marker.image_id + '.jpg') }}">');
+        {% endfor %}
+        {% endif %}
+
     </script>
 </body>
 </html>

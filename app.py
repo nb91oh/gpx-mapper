@@ -88,13 +88,22 @@ def test():
     results = cursor.fetchall()
     hikes = []
     for row in results:
+
+        
         hike_id = row['hike_id']
         hike_date = row['hike_date']
         duration = row['duration']
         hike_length = row['hike_length']
         elevation_gain = row['elevation_gain']
         avg_speed = row['avg_speed']
-        hike = {"hike_id": hike_id, "hike_date": hike_date, "duration": duration, "hike_length": hike_length, "elevation_gain": elevation_gain, "avg_speed": avg_speed}
+
+        sql = "SELECT count() as count FROM images WHERE hike_id = ? ;"
+        cursor.execute(sql, (hike_id,))
+        result = cursor.fetchall()
+        image_count = result[0]['count']
+        hike = {"hike_id": hike_id, "hike_date": hike_date, "duration": duration,
+                "hike_length": hike_length, "elevation_gain": elevation_gain, "avg_speed": avg_speed,
+                "image_count": image_count}
         hikes.append(hike)
 
     return render_template('home.html', hikes = hikes)
@@ -113,7 +122,28 @@ def map():
     bounds = json.dumps([line.bounds[::-1][0:2], line.bounds[::-1][2:4]])
     geojson = json.dumps(gpd.GeoSeries([line]).__geo_interface__)
 
-    return render_template('map.html', location = location, geojson = geojson, bounds = bounds)
+    sql = """
+WITH p AS (
+	SELECT point_id, image_id 
+	FROM images 
+	WHERE hike_id = ?
+)
+SELECT p.point_id, p.image_id, points.x, points.y FROM points
+INNER JOIN p ON points.point_id = p.point_id
+    """
+
+    cur = conn.cursor()
+    cur.execute(sql, (hike_id,))
+    result = cur.fetchall()
+    markers = []
+    for row in result:
+        image_id = row['image_id']
+        x = row['x']
+        y = row['y']
+        marker = {"image_id": image_id, "x": x, "y": y}
+        markers.append(marker)
+
+    return render_template('map.html', location = location, geojson = geojson, bounds = bounds, markers = markers)
 
 
 @app.route('/img_upload', methods = ['POST'])

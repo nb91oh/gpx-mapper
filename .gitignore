@@ -8,3 +8,4 @@ mapper/test.py
 *.ipynb
 *.svg
 test_notebooks/hike.geojson
+*.jpg

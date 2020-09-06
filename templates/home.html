@@ -23,7 +23,8 @@
         <li><a>Hike Length: <span class="badge">{{ "%.2f"|format(hike.hike_length/1000) }} km</span></a></li>
         <li><a>Hike Duration: <span class="badge">{{ hike.duration }}</span></a></li>
         <li><a>Average Speed: <span class="badge">{{ "%.2f"|format(hike.avg_speed) }} km/h</span></a></li>
-        <li><a>Total Elevation Gain: <span class="badge">{{ "%.2f"|format(hike.elevation_gain) }}</span></a></li>
+        <!-- <li><a>Total Elevation Gain: <span class="badge">{{ "%.2f"|format(hike.elevation_gain) }}</span></a></li> -->
+        <li><a>Images Uploaded: <span class="badge">{{ hike.image_count }}</span></a></li>
         <li><a href="{{ url_for('map', id = hike.hike_id) }}" type="button" class="btn btn-link">View Map</a></li>
         <li>
           <form action = "/img_upload" method = "POST" enctype = "multipart/form-data">
