@@ -19,3 +19,9 @@ CREATE TABLE hikes(
 	elevation_gain NUMERIC NOT NULL,
 	avg_speed NUMERIC NOT NULL
 );
+
+CREATE TABLE images(
+	image_id TEXT NOT NULL,
+	point_id TEXT NOT NULL,
+	hike_id TEXT NOT NULL
+);

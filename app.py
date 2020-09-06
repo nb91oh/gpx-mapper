@@ -13,6 +13,7 @@ import pytz
 from tzwhere import tzwhere
 from pytz import timezone
 import pytz
+import uuid
 
 from mapper.db import create_db
 from mapper.insert import insert_gpx
@@ -35,7 +36,7 @@ def allowed_file(filename):
 
 def connect_db():
     sql = sqlite3.connect('./sqlite/gpx.db')
-    #sql.row_factory = sqlite3.Row
+    sql.row_factory = sqlite3.Row
     return sql
 
 
@@ -144,16 +145,28 @@ def img_upload():
     utc_str = loc_dt.astimezone(utc).strftime(fmt)
     utc_str_format = utc_str[:-2] + ':' '00'
 
-    sql = """SELECT * FROM points \
+    sql = """SELECT hike_id, point_id FROM points \
         WHERE created_at = ? AND hike_id = ?\
         LIMIT 1;"""
     
     cursor.execute(sql, (utc_str_format, hike_id))
     results = cursor.fetchall()
 
-    if results:
-        return jsonify("the img was on this hike")
-    else:
-        return jsonify("the img was not on this hike")
+    image_id = str(uuid.uuid4())
+    f.save(f"./static/img/{image_id}.jpg")
+
+    hike_id = results[0]['hike_id']
+    point_id = results[0]['point_id']
+
+    sql = "INSERT INTO images (image_id, point_id, hike_id) VALUES (?, ?, ?);"
+
+    conn.execute(sql, (image_id, point_id, hike_id))
+    conn.commit()
+
+    return redirect(url_for('test'))
+
+    
+
+
 
 
