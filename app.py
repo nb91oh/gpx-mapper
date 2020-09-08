@@ -25,7 +25,6 @@ app.secret_key = 'ishouldreallychangethis'
 
 ALLOWED_EXTENSIONS = ['gpx']
 
-
 create_db()
 
 def allowed_file(filename):
@@ -69,18 +68,17 @@ def upload():
 def upload_file():
     if request.method == 'POST':
         files = request.files.getlist('file')
-        # if not allowed_file(f.filename) == True:
-        #     # todo: make this a javascript alert
-        #     flash("sorry we only take .gpx round these parts")
-        #     return redirect(url_for('upload'))
         for file in files:
+            if not allowed_file(file.filename) == True:
+                flash("Only .gpx uploads supported")
+                return redirect(url_for('home'))
             conn = get_db()
             insert_gpx(conn, file)
-        return redirect(url_for('test'))
+        return redirect(url_for('home'))
 
 
 @app.route('/')
-def test():
+def home():
     conn = get_db()
     cursor = conn.cursor()
     sql = """SELECT DISTINCT hike_id, hike_date, duration, hike_length, elevation_gain, avg_speed FROM hikes ORDER BY hike_date;"""
@@ -154,10 +152,22 @@ def img_upload():
 
     f = request.files[f'img_file.{hike_id}']
 
+    if f.filename.split('.')[-1] not in ['jpg', 'jpeg']:
+        flash('Only .jpg or .jpeg image upload supported')
+        return redirect(url_for('home'))
+
+    extension = f.filename.split('.')[-1]
+    image_id = str(uuid.uuid4())
+    filename = f"{image_id}.{extension}"
+    f.save(f"./static/img/{filename}")
+
+    # get the naive timestamp of the photo
     tags = exifread.process_file(f)
     datetimestr = tags['Image DateTime'].values
     datetimeobj = datetime.datetime.strptime(datetimestr, "%Y:%m:%d %H:%M:%S")
 
+
+    # get the timezone of the hike based on the avg lat, long of the hike
     conn = get_db()
     cursor = conn.cursor()
     sql = "SELECT AVG(y) , AVG(x) FROM points WHERE hike_id = ?"
@@ -167,12 +177,15 @@ def img_upload():
     avg_x = results[1]
     tz = tzwhere.tzwhere()
     timezone_str = tz.tzNameAt(avg_y, avg_x)
-    
+
+
+    # localize the timestamp of the photo to the timezone of the hike
     fmt = '%Y-%m-%d %H:%M:%S%z'
     eastern = timezone(timezone_str)
     loc_dt = eastern.localize(datetimeobj)
     utc = pytz.utc
     utc_str = loc_dt.astimezone(utc).strftime(fmt)
+    # format the timestamp string to match the timestamp strings in the database
     utc_str_format = utc_str[:-2] + ':' '00'
 
     sql = """SELECT hike_id, point_id FROM points \
@@ -182,8 +195,11 @@ def img_upload():
     cursor.execute(sql, (utc_str_format, hike_id))
     results = cursor.fetchall()
 
-    image_id = str(uuid.uuid4())
-    f.save(f"./static/img/{image_id}.jpg")
+    # if no results then the image wasn't taken on the hike
+    if not results:
+        # todo: flash an alert saying the upload failed
+        flash('Your image could not be located')
+        return redirect(url_for('home'))
 
     hike_id = results[0]['hike_id']
     point_id = results[0]['point_id']
@@ -193,7 +209,9 @@ def img_upload():
     conn.execute(sql, (image_id, point_id, hike_id))
     conn.commit()
 
-    return redirect(url_for('test'))
+
+
+    return redirect(url_for('home'))
 
     
 

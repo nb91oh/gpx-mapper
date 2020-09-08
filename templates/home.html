@@ -9,7 +9,17 @@
     <form action = "/uploader" method = "POST" enctype = "multipart/form-data">
         <input type = "file" name = "file" multiple/>
         <input type = "submit"/>
-    </form>   
+    </form> 
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class=flashes>
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+{% endwith %}
 
 {% if hikes %}
 {% for hike in hikes %}

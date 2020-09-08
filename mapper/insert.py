@@ -40,13 +40,21 @@ def latLong2ESPG(lat, long):
 
 
 def insert_gpx(conn, gpx_file):
-    insert_sql = "INSERT INTO points (filename, hike_id, upload_date, track_id, segment_id, point_id, x, y, z, created_at) \
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-
     filename = gpx_file.filename
+
+    cur = conn.cursor()
+    select_sql = "SELECT * FROM points WHERE filename = ? LIMIT 1"
+    cur.execute(select_sql, (filename,))
+    result = cur.fetchall()
+    if result:
+        return
+
     points = parse_gpx(gpx_file)
     hike_id = uuid.uuid4()
     upload_date = datetime.datetime.now()
+
+    insert_sql = "INSERT INTO points (filename, hike_id, upload_date, track_id, segment_id, point_id, x, y, z, created_at) \
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
     for i in points:
         conn.execute(insert_sql, (filename, str(hike_id), str(upload_date), str(i['track_id']), str(i['segment_id']), str(i['point_id']), i['long'], i['lat'], i['elev'], i['time']))
