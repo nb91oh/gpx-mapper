@@ -7,5 +7,5 @@ test.py
 mapper/test.py
 *.ipynb
 *.svg
-test_notebooks/hike.geojson
+test_notebooks/*
 *.jpg
