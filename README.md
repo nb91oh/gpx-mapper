@@ -1,5 +1,6 @@
 # gpx-mapper
 gpx-mapper is a flask application designed to allow users to upload .gpx files and view them as lines on a leaflet map
+![](https://i.imgur.com/dSZ7qZF.gif)
 
 ## installation
 to run gpx_mapper you will need python and sqlite on your machine. first create a virtual environment at the root of the directory:
