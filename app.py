@@ -86,8 +86,6 @@ def home():
     results = cursor.fetchall()
     hikes = []
     for row in results:
-
-        
         hike_id = row['hike_id']
         hike_date = row['hike_date']
         duration = row['duration']

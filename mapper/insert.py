@@ -6,7 +6,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import LineString
 import math
-
+import matplotlib.pyplot as plt
 
 def parse_gpx(gpx_file):
     """parse a gpx file into points for insertion into db"""
@@ -70,6 +70,23 @@ def insert_gpx(conn, gpx_file):
     avg_y = points_df.y.mean()
     epsg = latLong2ESPG(avg_y, avg_x)
     points_df_utm = points_df.to_crs(epsg = epsg)
+
+    d = 0
+    distances = []
+    for i in list(range(len(points_df_utm))):
+        if i == 0:
+            d += 0
+        else:
+            d += points_df_utm.geometry[i].distance(points_df_utm.geometry[i-1])
+        distances.append(d)
+
+    points_df_utm['h_distance'] = distances
+    plt.ylabel('elevation (m)')
+    plt.xlabel('distance (m)')
+    plt.plot(points_df_utm.h_distance, points_df_utm.z)
+    plt.savefig(f"./static/charts/{hike_id}.png")
+    plt.close()
+
 
     line = LineString(points_df_utm.geometry)
     length_m = line.length

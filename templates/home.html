@@ -1,10 +1,9 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
 </head>
-
-
 <body>
     <form action = "/uploader" method = "POST" enctype = "multipart/form-data">
         <input type = "file" name = "file" multiple/>
@@ -45,6 +44,7 @@
       </ul>
     </div>
   </div>
+  <img src = "{{ url_for('static', filename='/charts/' + hike.hike_id + '.png') }}">
 {% endfor %}
 {% else %}
 <h1>No hikes found, please upload some first!</h1>

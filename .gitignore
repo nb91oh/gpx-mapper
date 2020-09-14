@@ -9,3 +9,4 @@ mapper/test.py
 *.svg
 test_notebooks/*
 *.jpg
+*.png
